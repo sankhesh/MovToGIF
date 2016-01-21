@@ -3,7 +3,7 @@
 # Function to print usage of current script
 function print_usage {
   echo -e "\n$0 - Convert MOV files to gifs using FFMPEG"
-  echo -e "\nUsage:\n\t$0 -f <string> [-d <string>] [-h]"
+  echo -e "\nUsage:\n\t$0 -f <string> [-d <string>] [-g <string>] [-h]"
   echo -e "\nWhere:"
   echo -e "\t-f <string>, --fileName <string>"
   echo -e "\tMOV file to convert"
@@ -14,6 +14,8 @@ function print_usage {
   echo -e "\tThe output files are written to a folder with the name 'gifs'"
   echo -e "\tinside the input directory"
   echo -e "\tThis option takes precedence over -f, --filename."
+  echo -e "\n\t-g <string>, --geometry <string>"
+  echo -e "\tThe geometry of the output file. Default: 800x600."
   echo -e "\n\t-h, --help"
   echo -e "\tDisplay this usage information and exit."
 }
@@ -22,7 +24,7 @@ function print_usage {
 # Takes 2 arguments -> input output
 function convert_mov {
   echo "Converting '$1' to '$2'..."
-  ffmpeg -i "$1" -s 800x600 -pix_fmt rgb24 -r 10 -f gif -| gifsicle --optimize=3 --delay=3 > "$2"
+  ffmpeg -i "$1" -s $3 -pix_fmt rgb24 -r 10 -f gif -| gifsicle --optimize=3 --delay=3 > "$2"
   echo "Converting '$1' to '$2'...Done"
 }
 
@@ -33,9 +35,10 @@ then
   exit 1;
 fi
 
-optspec=":hfd-:"
+optspec=":hfdg-:"
 fileName=""
 dirName=""
+geometry="800x600"
 while getopts "$optspec" opt; do
   case ${opt} in
     -)
@@ -52,6 +55,10 @@ while getopts "$optspec" opt; do
           dirName="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
           echo "Parsing option: '--${OPTARG}', value: '${dirName}'"
           ;;
+        geometry)
+          geometry="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+          echo "Parsing option: '--${OPTARG}', value: '${geometry}'"
+          ;;
         *)
           if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
             echo "Unknown option --${OPTARG}" >&2
@@ -67,11 +74,15 @@ while getopts "$optspec" opt; do
       ;;
     f)
       fileName="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
-      echo "Parsing option: '-f', value: '${fileName}'"
+      echo "Parsing option: '-${opt}', value: '${fileName}'"
       ;;
     d)
       dirName="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
-      echo "Parsing option: '-d', value: '${dirName}'"
+      echo "Parsing option: '-${opt}', value: '${dirName}'"
+      ;;
+    g)
+      geometry="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+      echo "Parsing option: '-${opt}', value: '${geometry}'"
       ;;
     *)
       echo "Invalid option: -${OPTARG}" >&2
@@ -103,14 +114,14 @@ if [ -n "$dirName" ]; then
       outfilename="$(basename "$filename")"
       outfilename="${outfilename/"mov"/gif}"
       outfilename="$outdirName/$outfilename"
-      convert_mov "$filename" "$outfilename"
+      convert_mov "$filename" "$outfilename" "$geometry"
     done
   fi
 else
     if [ -n "$fileName" ]; then
       if [ -f "$fileName" ]; then
         outfilename="${fileName/"mov"/gif}"
-        convert_mov "$fileName" "$outfilename"
+        convert_mov "$fileName" "$outfilename" "$geometry"
       else
         echo "File '$fileName' not a valid file" >&2
         exit 1
