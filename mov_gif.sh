@@ -67,7 +67,7 @@ while getopts "$optspec" opt; do
           fi
           ;;
       esac;;
-          
+
     h)
       print_usage
       exit 1
