@@ -121,6 +121,10 @@ else
     if [ -n "$fileName" ]; then
       if [ -f "$fileName" ]; then
         outfilename="${fileName/"mov"/gif}"
+        if [[ $outfilename == $fileName ]]; then
+          outfilename="${fileName}.gif"
+        fi
+        echo "Output will be written to '$outfilename'"
         convert_mov "$fileName" "$outfilename" "$geometry"
       else
         echo "File '$fileName' not a valid file" >&2
